@@ -350,6 +350,7 @@ private:
         Row row = sys_Tables.readRow(0);
         int row_count = row.getValueByColumnName("Row_Count").getIntValue();
         sys_Tables.setRowCount(row_count);
+        sys_Tables.setDataSegment();
         return sys_Tables;
     }
 
@@ -373,6 +374,7 @@ private:
         sys_Columns.setColumnDefs(column_defs);
         int row_count = getSysTables().readRow(1).getValueByColumnName("Row_Count").getIntValue();
         sys_Columns.setRowCount(row_count);
+        sys_Columns.setDataSegment();
         return sys_Columns;
     }
 
@@ -382,14 +384,16 @@ private:
         int column_size = colDefs_Of_Table.columnsName.size();
         //Update the Sys_Tables
         DBValue val_1(table_name);
+        val_1.setString(table_name);
         DBValue val_2(0);
+        val_2.setInt(0);
         Row row_1;
-        row_1.setColumnDefs(getSysTables().getColumnDefs());
+        SystemTable sys_table = getSysTables();
+        row_1.setColumnDefs(sys_table.getColumnDefs());
         row_1.setValueByColumnName("Table_Name", val_1);
         row_1.setValueByColumnName("Row_Count", val_2);
-        SystemTable systable = getSysTables();
-        int count = systable.getRowCount();
-        getSysTables().createRow(row_1);
+        sys_table.setDataSegment();
+        sys_table.createRow(row_1);
 
         //Update the row_count of Sys_Tables
         Row row = getSysTables().readRow(0);
@@ -439,6 +443,10 @@ private:
             DBValue val_6(table_name);
             DBValue val_7(columnTypeList[i]);
             DBValue val_8(i);
+            val_5.setString(columnNameList[i]);
+            val_6.setString(table_name);
+            val_7.setString(columnTypeList[i]);
+            val_8.setInt(i);
             Row row;
             row.setColumnDefs(getSysColumns().getColumnDefs());
             row.setValueByColumnName("Columns_Name", val_5);

@@ -270,27 +270,18 @@ public:
         int row_length = columnDefs_.columns_.size();
         for (int i = 0; i < row_length; i++) {
             if (columnDefs_.columns_[columnDefs_.columnsName[i]].getType() == DBType :: INT) {
-                if (sizeof(buffer) != columnDefs_.columns_[columnDefs_.columnsName[i]].getWidth()) {
-                    break;
-                }
                 int num;
                 memcpy(&num, buffer, sizeof(int));
                 value.setInt(num);
                 this -> setValueByColumnName(columnDefs_.columnsName[i], value);
             }
             if (columnDefs_.columns_[columnDefs_.columnsName[i]].getType() == DBType :: FLOAT) {
-                if (sizeof(buffer) != columnDefs_.columns_[columnDefs_.columnsName[i]].getWidth()) {
-                    break;
-                }
                 float f;
                 memcpy(&f, buffer, sizeof(float));
                 value.setFloat(f);
                 this -> setValueByColumnName(columnDefs_.columnsName[i], value);
             }
             if (columnDefs_.columns_[columnDefs_.columnsName[i]].getType() == DBType :: STRING) {
-                if (sizeof(buffer) != columnDefs_.columns_[columnDefs_.columnsName[i]].getWidth()) {
-                    break;
-                }
                 string str(buffer, 30);
                 value.setString(str);
                 this -> setValueByColumnName(columnDefs_.columnsName[i], value);  
@@ -395,16 +386,7 @@ public:
         DatabaseName = name;
     }
 
-private:
-    int row_count;
-    string table_name;
-    ColumnDefs columnDefs_;
-    Segment DataSegment;
-    Segment Index;
-    map<string, Extent> table_extent_list;
-    string DatabaseName;
-
-    //get the corresponding data segment
+    //set and get the corresponding data segment
     Segment setDataSegment() {
         Segment segment;
         map<int, int> columns_width;
@@ -423,6 +405,15 @@ private:
         }
         return segment;
     }
+
+private:
+    int row_count;
+    string table_name;
+    ColumnDefs columnDefs_;
+    Segment DataSegment;
+    Segment Index;
+    map<string, Extent> table_extent_list;
+    string DatabaseName;
 };
 
 class SystemTable : public Table {
@@ -492,15 +483,6 @@ public:
         DatabaseName = name;
     }
 
-private:
-    int row_count;
-    string table_name;
-    ColumnDefs columnDefs_;
-    Segment DataSegment;
-    Segment Index;
-    map<string, Extent> table_extent_list;
-    string DatabaseName;
-
     //get the corresponding data segment
     Segment setDataSegment() {
         Segment segment;
@@ -520,4 +502,13 @@ private:
         }
         return segment;
     }
+
+private:
+    int row_count;
+    string table_name;
+    ColumnDefs columnDefs_;
+    Segment DataSegment;
+    Segment Index;
+    map<string, Extent> table_extent_list;
+    string DatabaseName;
 };
