@@ -25,7 +25,7 @@ public:
     void writeData(int offset, char* data) {
         //open the file  
         FILE* file;
-        file = fopen(extent_file_name.c_str(), "wb+");
+        file = fopen(extent_file_name.c_str(), "rb+");
 
         //seek the position
         int seek = fseek(file, offset, SEEK_SET);

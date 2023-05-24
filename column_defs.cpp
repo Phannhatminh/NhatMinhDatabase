@@ -205,7 +205,7 @@ public:
         else {
             int size = values_.size();
             values_name[size] = name;
-            values_.insert({name, value});
+            values_[name] = value;
         }
     }
 
@@ -264,39 +264,38 @@ public:
     }
 
     //decode from byte array to field value in Row
+    //Deckde build row xong return ra row với mấy cái map trống trơn.
     void decode(char* buffer) {
         DBValue value;
-        vector<DBValue> val_Vec;
-        int row_length = values_.size();
+        int row_length = columnDefs_.columns_.size();
         for (int i = 0; i < row_length; i++) {
-            if (values_[values_name[i]].getType() == DBType :: INT) {
-                if (sizeof(buffer) != values_[values_name[i]].getWidth()) {
+            if (columnDefs_.columns_[columnDefs_.columnsName[i]].getType() == DBType :: INT) {
+                if (sizeof(buffer) != columnDefs_.columns_[columnDefs_.columnsName[i]].getWidth()) {
                     break;
                 }
                 int num;
                 memcpy(&num, buffer, sizeof(int));
                 value.setInt(num);
-                val_Vec.push_back(value);
+                this -> setValueByColumnName(columnDefs_.columnsName[i], value);
             }
-            if (values_[values_name[i]].getType() == DBType :: FLOAT) {
-                if (sizeof(buffer) != values_[values_name[i]].getWidth()) {
+            if (columnDefs_.columns_[columnDefs_.columnsName[i]].getType() == DBType :: FLOAT) {
+                if (sizeof(buffer) != columnDefs_.columns_[columnDefs_.columnsName[i]].getWidth()) {
                     break;
                 }
                 float f;
                 memcpy(&f, buffer, sizeof(float));
                 value.setFloat(f);
-                val_Vec.push_back(value);
+                this -> setValueByColumnName(columnDefs_.columnsName[i], value);
             }
-            if (values_[values_name[i]].getType() == DBType :: STRING) {
-                if (sizeof(buffer) != values_[values_name[i]].getWidth()) {
+            if (columnDefs_.columns_[columnDefs_.columnsName[i]].getType() == DBType :: STRING) {
+                if (sizeof(buffer) != columnDefs_.columns_[columnDefs_.columnsName[i]].getWidth()) {
                     break;
                 }
                 string str(buffer, 30);
                 value.setString(str);
-                val_Vec.push_back(value);  
+                this -> setValueByColumnName(columnDefs_.columnsName[i], value);  
             }  
         }
-        this -> SetValue(val_Vec);
     }
 
 private:
@@ -335,7 +334,7 @@ private:
 class Table {
 public:
     virtual void createRow(Row row) = 0;
-    virtual Row* readRow(int index) = 0;
+    virtual Row readRow(int index) = 0;
     virtual int getRowCount() = 0;
     virtual void setRowCount(int n) = 0;
 };
@@ -376,10 +375,11 @@ public:
         }
     }
 
-    Row* readRow(int index) override {
-        Row* row = new Row(getColumnDefs());
+    Row readRow(int index) override {
+        Row row;
+        row.setColumnDefs(columnDefs_);
         char* buffer = setDataSegment().read(index);
-        row -> decode(buffer);
+        row.decode(buffer);
         return row;
     }
 
@@ -402,7 +402,6 @@ private:
     Segment DataSegment;
     Segment Index;
     map<string, Extent> table_extent_list;
-    int table_size = columnDefs_.getRowSize();
     string DatabaseName;
 
     //get the corresponding data segment
@@ -412,6 +411,7 @@ private:
         int i = 0;
         int current_extent = 0;
         int size = columnDefs_.columns_.size();
+        int table_size = columnDefs_.getRowSize();
         for (int i = 0; i < size; i++) {
             columns_width[i] = columnDefs_.columns_[columnDefs_.columnsName[i]].getWidth();
         }
@@ -472,10 +472,11 @@ public:
         }
     }
 
-    Row* readRow(int index) override {
-        Row* row = new Row(getColumnDefs());
+    Row readRow(int index) override {
+        Row row;
+        row.setColumnDefs(columnDefs_);
         char* buffer = setDataSegment().read(index);
-        row -> decode(buffer);
+        row.decode(buffer);
         return row;
     }
 
@@ -498,7 +499,6 @@ private:
     Segment DataSegment;
     Segment Index;
     map<string, Extent> table_extent_list;
-    int table_size = columnDefs_.getRowSize();
     string DatabaseName;
 
     //get the corresponding data segment
@@ -507,6 +507,7 @@ private:
         map<int, int> columns_width;
         int current_extent = 0;
         int size = columnDefs_.columns_.size();
+        int table_size = columnDefs_.getRowSize();
         for (int i = 0; i < size; i++) {
             string column_name = columnDefs_.columnsName[i];
             columns_width[i] = columnDefs_.columns_[columnDefs_.columnsName[i]].getWidth();

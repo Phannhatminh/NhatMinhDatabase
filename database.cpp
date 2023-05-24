@@ -45,6 +45,7 @@ public:
                 }
             }
             else {
+                fclose(file);
                 cout << "Table " << table_name << " has already exist in database " << nameOfDatabase << endl;
             }
         }
@@ -68,29 +69,29 @@ public:
         vector<DBType::Type> typeList;
         vector<int> widthList;
         int row_count;
-        int sys_table_row_count = getSysTables().readRow(0)->getValueByColumnName("Row_Count").getIntValue();
-        int sys_column_row_count = getSysTables().readRow(1)->getValueByColumnName("Row_Count").getIntValue();
+        int sys_table_row_count = getSysTables().readRow(0).getValueByColumnName("Row_Count").getIntValue();
+        int sys_column_row_count = getSysTables().readRow(1).getValueByColumnName("Row_Count").getIntValue();
         for (int i = 0; i < sys_table_row_count; i++) {
-            if (getSysTables().readRow(i)->getValueByColumnName("Table_Name").getStringValue() == table_name) {
-                row_count = getSysTables().readRow(i)->getValueByColumnName("Row_Count").getIntValue();
+            if (getSysTables().readRow(i).getValueByColumnName("Table_Name").getStringValue() == table_name) {
+                row_count = getSysTables().readRow(i).getValueByColumnName("Row_Count").getIntValue();
                 break;
             }
         }
         //Scan the sysTableOfColumns
         for (int i = 0; i < sys_column_row_count; i++) {
-            if (getSysColumns().readRow(i)->getValueByColumnName("Column_Table_Name").getStringValue() == table_name) {
-                nameList.push_back(getSysColumns().readRow(i)->getValueByColumnName("Column_Name").getStringValue());
-                if (getSysColumns().readRow(i)->getValueByColumnName("Column_Data_Type").getStringValue() == "int") {
+            if (getSysColumns().readRow(i).getValueByColumnName("Column_Table_Name").getStringValue() == table_name) {
+                nameList.push_back(getSysColumns().readRow(i).getValueByColumnName("Column_Name").getStringValue());
+                if (getSysColumns().readRow(i).getValueByColumnName("Column_Data_Type").getStringValue() == "int") {
                     DBType::Type type = DBType::INT;
                     typeList.push_back(type);
                     widthList.push_back(sizeof(int));
                 }
-                if (getSysColumns().readRow(i)->getValueByColumnName("Column_Data_Type").getStringValue() == "float") {
+                if (getSysColumns().readRow(i).getValueByColumnName("Column_Data_Type").getStringValue() == "float") {
                     DBType::Type type = DBType::FLOAT;
                     typeList.push_back(type);
                     widthList.push_back(sizeof(float));
                 }
-                if (getSysColumns().readRow(i)->getValueByColumnName("Column_Data_Type").getStringValue() == "string") {
+                if (getSysColumns().readRow(i).getValueByColumnName("Column_Data_Type").getStringValue() == "string") {
                     DBType::Type type = DBType::STRING;
                     typeList.push_back(type);
                     widthList.push_back(30);
@@ -171,6 +172,7 @@ private:
                     std::cerr << "Failed to create column " << column_defs.columnsName[i] << " of SysTables in database " << nameOfDatabase << std::endl;
                     exist = exist && false;
                 }
+                fclose(outFile);
             }
             else {
                 cout << "Sys_Tables " << " has already exist in database " << nameOfDatabase << endl;
@@ -345,8 +347,8 @@ private:
         sys_Tables.setDatabaseName(nameOfDatabase);
         sys_Tables.setName("Sys_Tables");
         sys_Tables.setColumnDefs(column_defs);
-        Row* row = sys_Tables.readRow(0);
-        int row_count = sys_Tables.readRow(0) -> getValueByColumnName("Row_Count").getIntValue();
+        Row row = sys_Tables.readRow(0);
+        int row_count = row.getValueByColumnName("Row_Count").getIntValue();
         sys_Tables.setRowCount(row_count);
         return sys_Tables;
     }
@@ -369,7 +371,7 @@ private:
         sys_Columns.setDatabaseName(nameOfDatabase);
         sys_Columns.setName("Sys_Columns");
         sys_Columns.setColumnDefs(column_defs);
-        int row_count = getSysTables().readRow(1) -> getValueByColumnName("Row_Count").getIntValue();
+        int row_count = getSysTables().readRow(1).getValueByColumnName("Row_Count").getIntValue();
         sys_Columns.setRowCount(row_count);
         return sys_Columns;
     }
@@ -385,11 +387,13 @@ private:
         row_1.setColumnDefs(getSysTables().getColumnDefs());
         row_1.setValueByColumnName("Table_Name", val_1);
         row_1.setValueByColumnName("Row_Count", val_2);
+        SystemTable systable = getSysTables();
+        int count = systable.getRowCount();
         getSysTables().createRow(row_1);
 
         //Update the row_count of Sys_Tables
-        Row* row = getSysTables().readRow(0);
-        DBValue init_values_ = row -> getValueByColumnName("Row_Count");
+        Row row = getSysTables().readRow(0);
+        DBValue init_values_ = row.getValueByColumnName("Row_Count");
         DBValue value_1("Sys_Tables");
         DBValue value_2(init_values_.getIntValue() + 1);
         Row changed_values_;
@@ -419,8 +423,8 @@ private:
         }
 
         //Update the row_count of Sys_Columns
-        Row* row_2 = getSysTables().readRow(1);
-        DBValue init_values_1 = row_2 -> getValueByColumnName("Row_Count");
+        Row row_2 = getSysTables().readRow(1);
+        DBValue init_values_1 = row_2.getValueByColumnName("Row_Count");
         DBValue value_3("Sys_Columns");
         DBValue value_4(init_values_1.getIntValue() + colDefs_Of_Table.getColumnCount());
         Row changed_values_1;
