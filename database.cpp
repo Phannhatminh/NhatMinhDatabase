@@ -103,7 +103,7 @@ public:
         for (int i = 0; i < sys_column_row_count; i++) {
             ColumnDef column_def(nameList[i], typeList[i], widthList[i]);
             columnDefs.addColumn(column_def);
-        }
+        } //Problem: name_list blank, type_list blank, width_list blank
 
         //build table
         UserTable table(columnDefs);
@@ -388,12 +388,14 @@ private:
         SystemTable sys_table = getSysTables();
         sys_table.setDataSegment();
         Row row_for_sys_table = sys_table.readRow(0);
+        row_for_sys_table.setColumnDefs(sys_table.getColumnDefs());
         int sys_table_row_count = row_for_sys_table.getValueByColumnName("Row_Count").getIntValue();
         sys_table.setRowCount(sys_table_row_count);
-        
+
         //Set up sysColumns:
         SystemTable sys_columns = getSysColumns();
         Row row_for_sys_columns = getSysTables().readRow(1);
+        row_for_sys_columns.setColumnDefs(sys_columns.getColumnDefs());
         int sys_columns_row_count = row_for_sys_columns.getValueByColumnName("Row_Count").getIntValue();
 
         //Update the Sys_Tables
@@ -411,11 +413,10 @@ private:
         DBValue init_values_ = row_for_sys_table.getValueByColumnName("Row_Count");
         DBValue value_1("Sys_Tables");
         DBValue value_2(init_values_.getIntValue() + 1);
-        Row changed_values_;
-        changed_values_.setColumnDefs(getSysTables().getColumnDefs());
-        changed_values_.setValueByColumnName("Table_Name", value_1);
-        changed_values_.setValueByColumnName("Row_Count", value_2);
-        getSysTables().updateRow(changed_values_, 0);
+        row_for_sys_table.setColumnDefs(getSysTables().getColumnDefs());
+        row_for_sys_table.setValueByColumnName("Table_Name", value_1);
+        row_for_sys_table.setValueByColumnName("Row_Count", value_2);
+        getSysTables().updateRow(row_for_sys_table, 0);
 
         // Update the Sys_Columns
         //get all the column name and put them into a vector
@@ -438,14 +439,12 @@ private:
         }
 
         //Update the row_count of Sys_Columns
-        Row row_2 = getSysTables().readRow(1);
         DBValue init_values_1 = row_for_sys_columns.getValueByColumnName("Row_Count");
         DBValue value_3("Sys_Columns");
         DBValue value_4(init_values_1.getIntValue() + colDefs_Of_Table.getColumnCount());
-        Row changed_values_1;
-        changed_values_1.setValueByColumnName("Table_Name", value_3);
-        changed_values_1.setValueByColumnName("Row_Count", value_4);
-        getSysColumns().updateRow(changed_values_1, 1);
+        row_for_sys_columns.setValueByColumnName("Table_Name", value_3);
+        row_for_sys_columns.setValueByColumnName("Row_Count", value_4);
+        sys_table.updateRow(row_for_sys_columns, 1);
 
         //create DBValues and write records into Sys_Columns
         int columnCount = colDefs_Of_Table.getColumnCount();
