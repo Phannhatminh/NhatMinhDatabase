@@ -268,16 +268,17 @@ public:
     void decode(char* buffer) {
         DBValue value;
         int row_length = columnDefs_.columns_.size();
+        int offset = 0;
         for (int i = 0; i < row_length; i++) {
             if (columnDefs_.columns_[columnDefs_.columnsName[i]].getType() == DBType :: INT) {
                 int num;
-                memcpy(&num, buffer, sizeof(int));
+                memcpy(&num, buffer + offset, sizeof(int)); 
                 value.setInt(num);
                 this -> setValueByColumnName(columnDefs_.columnsName[i], value);
             }
             if (columnDefs_.columns_[columnDefs_.columnsName[i]].getType() == DBType :: FLOAT) {
                 float f;
-                memcpy(&f, buffer, sizeof(float));
+                memcpy(&f, buffer + offset, sizeof(float));
                 value.setFloat(f);
                 this -> setValueByColumnName(columnDefs_.columnsName[i], value);
             }
@@ -286,6 +287,7 @@ public:
                 value.setString(str);
                 this -> setValueByColumnName(columnDefs_.columnsName[i], value);  
             }  
+            offset += columnDefs_.columns_[columnDefs_.columnsName[i]].getWidth();
         }
     }
 

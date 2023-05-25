@@ -382,22 +382,33 @@ private:
     void UpdateSystemTables(string table_name, ColumnDefs colDefs_Of_Table) {
         //Specify the column's size
         int column_size = colDefs_Of_Table.columnsName.size();
+
+        //Set up and prepare system tables instances:
+        //Set up sysTables:
+        SystemTable sys_table = getSysTables();
+        sys_table.setDataSegment();
+        Row row_for_sys_table = sys_table.readRow(0);
+        int sys_table_row_count = row_for_sys_table.getValueByColumnName("Row_Count").getIntValue();
+        sys_table.setRowCount(sys_table_row_count);
+        
+        //Set up sysColumns:
+        SystemTable sys_columns = getSysColumns();
+        Row row_for_sys_columns = getSysTables().readRow(1);
+        int sys_columns_row_count = row_for_sys_columns.getValueByColumnName("Row_Count").getIntValue();
+
         //Update the Sys_Tables
         DBValue val_1(table_name);
         val_1.setString(table_name);
         DBValue val_2(0);
         val_2.setInt(0);
         Row row_1;
-        SystemTable sys_table = getSysTables();
         row_1.setColumnDefs(sys_table.getColumnDefs());
         row_1.setValueByColumnName("Table_Name", val_1);
         row_1.setValueByColumnName("Row_Count", val_2);
-        sys_table.setDataSegment();
         sys_table.createRow(row_1);
 
         //Update the row_count of Sys_Tables
-        Row row = getSysTables().readRow(0);
-        DBValue init_values_ = row.getValueByColumnName("Row_Count");
+        DBValue init_values_ = row_for_sys_table.getValueByColumnName("Row_Count");
         DBValue value_1("Sys_Tables");
         DBValue value_2(init_values_.getIntValue() + 1);
         Row changed_values_;
@@ -428,7 +439,7 @@ private:
 
         //Update the row_count of Sys_Columns
         Row row_2 = getSysTables().readRow(1);
-        DBValue init_values_1 = row_2.getValueByColumnName("Row_Count");
+        DBValue init_values_1 = row_for_sys_columns.getValueByColumnName("Row_Count");
         DBValue value_3("Sys_Columns");
         DBValue value_4(init_values_1.getIntValue() + colDefs_Of_Table.getColumnCount());
         Row changed_values_1;
@@ -439,6 +450,7 @@ private:
         //create DBValues and write records into Sys_Columns
         int columnCount = colDefs_Of_Table.getColumnCount();
         for (int i = 0; i < columnCount; i++) {
+            sys_columns.setRowCount(sys_columns_row_count);
             DBValue val_5(columnNameList[i]);
             DBValue val_6(table_name);
             DBValue val_7(columnTypeList[i]);
@@ -453,7 +465,8 @@ private:
             row.setValueByColumnName("Columns_Table_Name", val_6);
             row.setValueByColumnName("Columns_Data_Type", val_7);
             row.setValueByColumnName("Order", val_8);
-            getSysColumns().createRow(row);
+            sys_columns.createRow(row);
+            sys_columns_row_count += 1;
         }
     }
 };
