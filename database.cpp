@@ -64,6 +64,7 @@ public:
 
     //method to get a table in a database
     UserTable getTableByName(string table_name) {
+        int table_size = 0;
         //Scan the sysTableOfTables for name
         SystemTable sys_tables = getSysTables();
         SystemTable sys_columns = getSysColumns();
@@ -74,7 +75,7 @@ public:
         vector<int> widthList;
         int row_count;
         int sys_table_row_count = sys_tables.readRow(0).getValueByColumnName("Row_Count").getIntValue();
-        int sys_column_row_count = sys_columns.readRow(1).getValueByColumnName("Row_Count").getIntValue();
+        int sys_column_row_count = sys_tables.readRow(1).getValueByColumnName("Row_Count").getIntValue();
         for (int i = 0; i < sys_table_row_count; i++) {
             if (sys_tables.readRow(i).getValueByColumnName("Table_Name").getStringValue() == table_name) {
                 row_count = sys_tables.readRow(i).getValueByColumnName("Row_Count").getIntValue();
@@ -103,11 +104,12 @@ public:
                     typeList.push_back(type);
                     widthList.push_back(30);
                 }
+                table_size += 1;
             }      
         }
         //return metadata
         ColumnDefs columnDefs;
-        for (int i = 0; i < sys_column_row_count; i++) {
+        for (int i = 0; i < table_size; i++) {
             ColumnDef column_def(nameList[i], typeList[i], widthList[i]);
             columnDefs.addColumn(column_def);
         } //Problem: name_list blank, type_list blank, width_list blank

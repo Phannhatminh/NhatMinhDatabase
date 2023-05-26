@@ -4,6 +4,7 @@
 #include <iostream>
 #include <cstring>
 #include <stdio.h>
+#include "special_function.cpp"
 #include "storage_engine.cpp"
 using namespace std;
 
@@ -283,8 +284,9 @@ public:
                 this -> setValueByColumnName(columnDefs_.columnsName[i], value);
             }
             if (columnDefs_.columns_[columnDefs_.columnsName[i]].getType() == DBType :: STRING) {
-                string str(buffer, 30);
-                value.setString(str);
+                string str(buffer + offset, 30);
+                string str_ = removeTrailingZeros(str);
+                value.setString(str_);
                 this -> setValueByColumnName(columnDefs_.columnsName[i], value);  
             }  
             offset += columnDefs_.columns_[columnDefs_.columnsName[i]].getWidth();
