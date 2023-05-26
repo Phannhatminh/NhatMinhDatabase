@@ -65,33 +65,40 @@ public:
     //method to get a table in a database
     UserTable getTableByName(string table_name) {
         //Scan the sysTableOfTables for name
+        SystemTable sys_tables = getSysTables();
+        SystemTable sys_columns = getSysColumns();
+        sys_tables.setDataSegment();
+        sys_columns.setDataSegment();
         vector<string> nameList;
         vector<DBType::Type> typeList;
         vector<int> widthList;
         int row_count;
-        int sys_table_row_count = getSysTables().readRow(0).getValueByColumnName("Row_Count").getIntValue();
-        int sys_column_row_count = getSysTables().readRow(1).getValueByColumnName("Row_Count").getIntValue();
+        int sys_table_row_count = sys_tables.readRow(0).getValueByColumnName("Row_Count").getIntValue();
+        int sys_column_row_count = sys_columns.readRow(1).getValueByColumnName("Row_Count").getIntValue();
         for (int i = 0; i < sys_table_row_count; i++) {
-            if (getSysTables().readRow(i).getValueByColumnName("Table_Name").getStringValue() == table_name) {
-                row_count = getSysTables().readRow(i).getValueByColumnName("Row_Count").getIntValue();
+            if (sys_tables.readRow(i).getValueByColumnName("Table_Name").getStringValue() == table_name) {
+                row_count = sys_tables.readRow(i).getValueByColumnName("Row_Count").getIntValue();
                 break;
+            }
+            else {
+                cout << "not yet baby";
             }
         }
         //Scan the sysTableOfColumns
         for (int i = 0; i < sys_column_row_count; i++) {
-            if (getSysColumns().readRow(i).getValueByColumnName("Column_Table_Name").getStringValue() == table_name) {
-                nameList.push_back(getSysColumns().readRow(i).getValueByColumnName("Column_Name").getStringValue());
-                if (getSysColumns().readRow(i).getValueByColumnName("Column_Data_Type").getStringValue() == "int") {
+            if (sys_columns.readRow(i).getValueByColumnName("Column_Table_Name").getStringValue() == table_name) {
+                nameList.push_back(sys_columns.readRow(i).getValueByColumnName("Column_Name").getStringValue());
+                if (sys_columns.readRow(i).getValueByColumnName("Column_Data_Type").getStringValue() == "int") {
                     DBType::Type type = DBType::INT;
                     typeList.push_back(type);
                     widthList.push_back(sizeof(int));
                 }
-                if (getSysColumns().readRow(i).getValueByColumnName("Column_Data_Type").getStringValue() == "float") {
+                if (sys_columns.readRow(i).getValueByColumnName("Column_Data_Type").getStringValue() == "float") {
                     DBType::Type type = DBType::FLOAT;
                     typeList.push_back(type);
                     widthList.push_back(sizeof(float));
                 }
-                if (getSysColumns().readRow(i).getValueByColumnName("Column_Data_Type").getStringValue() == "string") {
+                if (sys_columns.readRow(i).getValueByColumnName("Column_Data_Type").getStringValue() == "string") {
                     DBType::Type type = DBType::STRING;
                     typeList.push_back(type);
                     widthList.push_back(30);
@@ -342,6 +349,7 @@ private:
         column_defs.addColumn(column_1);
         column_defs.addColumn(column_2);
         SystemTable sys_Tables(column_defs);
+        sys_Tables.setColumnDefs(column_defs);
 
         //Set up Sys_Tables
         sys_Tables.setDatabaseName(nameOfDatabase);
@@ -367,6 +375,7 @@ private:
         column_defs.addColumn(column_3);
         column_defs.addColumn(column_4);
         SystemTable sys_Columns(column_defs);
+        sys_Columns.setColumnDefs(column_defs);
 
         //Set up Sys_Columns
         sys_Columns.setDatabaseName(nameOfDatabase);

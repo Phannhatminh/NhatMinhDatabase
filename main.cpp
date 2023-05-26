@@ -65,8 +65,8 @@ int main() {
     //    /usr/bin/clang++ -std=c++17 -pthread -fcolor-diagnostics -fansi-escape-codes -g /Users/nhatminh/NhatMinhDatabase/main.cpp -o /Users/nhatminh/NhatMinhDatabase/main
     int i = 0;
     DatabaseEngine dbEngine;
-    dbEngine.getInstance().createDatabase("MySchool");
-    Database db = dbEngine.getInstance().openDatabase("MySchool");
+    dbEngine.getInstance().createDatabase("MySchool16");
+    Database db = dbEngine.getInstance().openDatabase("MySchool16");
     ColumnDef column_1("id", DBType :: INT, sizeof(int));
     ColumnDef column_2("name", DBType :: STRING, 30);
     ColumnDefs colDefs;

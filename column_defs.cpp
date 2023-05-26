@@ -471,7 +471,7 @@ public:
         char* buffer = setDataSegment().read(index);
         row.decode(buffer);
         return row;
-    }
+    } //string khi được read sẽ ra nguyên cái buffer khác
 
     void setRowCount(int n) override {
         row_count = n;
