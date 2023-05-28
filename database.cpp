@@ -418,7 +418,7 @@ private:
         row_1.setColumnDefs(sys_table.getColumnDefs());
         row_1.setValueByColumnName("Table_Name", val_1);
         row_1.setValueByColumnName("Row_Count", val_2);
-        sys_table.createRow(row_1);
+        sys_table.insertRow(row_1);
 
         //Update the row_count of Sys_Tables
         DBValue init_values_ = row_for_sys_table.getValueByColumnName("Row_Count");
@@ -475,20 +475,20 @@ private:
             row.setValueByColumnName("Columns_Table_Name", val_6);
             row.setValueByColumnName("Columns_Data_Type", val_7);
             row.setValueByColumnName("Order", val_8);
-            sys_columns.createRow(row);
+            sys_columns.insertRow(row);
             sys_columns_row_count += 1;
         }
     }
 };
 
-class DatabaseEngine {
+class StorageEngine {
 public:
-    DatabaseEngine() {}
-    ~DatabaseEngine() {
+    StorageEngine() {}
+    ~StorageEngine() {
         // Cleanup the database engine...
     }
-    static DatabaseEngine& getInstance() {
-        static DatabaseEngine instance;
+    static StorageEngine& getInstance() {
+        static StorageEngine instance;
         return instance;
     }
 
@@ -529,14 +529,42 @@ public:
             return MyCurrentDatabase;
         }
     }
+
+    void InsertRow(string database_name, string table_name, Row row) {
+        createDatabase(database_name);
+        Database db = openDatabase(database_name);
+        db.setName(database_name);
+        db.createTable(table_name, row.getColumnDefs());
+        UserTable this_table = db.getTableByName(table_name);
+        row.setColumnDefs(this_table.getColumnDefs());
+        this_table.insertRow(row);
+    }
+
+    Row ReadRow(string database_name, string table_name, int index) {
+        createDatabase(database_name);
+        Database db = openDatabase(database_name);
+        db.setName(database_name);
+        UserTable this_table = db.getTableByName(table_name);
+        Row row = this_table.readRow(index);
+        return row;
+    }
+
+    Row createRow(vector<DBValue> val_vec, ColumnDefs column_defs) {
+        Row row;
+        row.setColumnDefs(column_defs);
+        for (int i = 0; i < val_vec.size(); i++) {
+            row.setValueByColumnName(column_defs.columnsName[i], val_vec[i]);
+        }
+        return row;
+    }
 private:
     
     Database MyCurrentDatabase;
     // Disable copy and move constructors
-    DatabaseEngine(const DatabaseEngine&) = delete;
-    DatabaseEngine& operator=(const DatabaseEngine&) = delete;
-    DatabaseEngine(DatabaseEngine&&) = delete;
-    DatabaseEngine& operator=(DatabaseEngine&&) = delete;
+    StorageEngine(const StorageEngine&) = delete;
+    StorageEngine& operator=(const StorageEngine&) = delete;
+    StorageEngine(StorageEngine&&) = delete;
+    StorageEngine& operator=(StorageEngine&&) = delete;
 
     //function to check the existence of database in the system
     bool DatabaseExist(string database_name) {

@@ -139,4 +139,3 @@ private:
     map<int, Extent> extent_list;
 };
 
-class StorageEngine {};

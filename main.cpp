@@ -64,9 +64,9 @@ class Application {
 int main() {
     //    /usr/bin/clang++ -std=c++17 -pthread -fcolor-diagnostics -fansi-escape-codes -g /Users/nhatminh/NhatMinhDatabase/main.cpp -o /Users/nhatminh/NhatMinhDatabase/main
     int i = 0;
-    DatabaseEngine dbEngine;
-    dbEngine.getInstance().createDatabase("MySchool");
-    Database db = dbEngine.getInstance().openDatabase("MySchool");
+    StorageEngine Engine;
+    Engine.getInstance().createDatabase("MySchool70");
+    Database db = Engine.getInstance().openDatabase("MySchool70");
     ColumnDef column_1("id", DBType :: INT, sizeof(int));
     ColumnDef column_2("name", DBType :: STRING, 30);
     ColumnDefs colDefs;
@@ -75,12 +75,19 @@ int main() {
     DBValue val_1(1);
     DBValue val_2("Phan Nhat Minh");
     Row row(colDefs);
+    DBValue val_3(2);
+    DBValue val_4("Pham Duy Long");
+    Row row_1(colDefs);
+    row_1.setColumnDefs(colDefs);
+    row_1.setValueByColumnName("id", val_3);
+    row_1.setValueByColumnName("name", val_4);
     row.setColumnDefs(colDefs);
     row.setValueByColumnName("id", val_1);
     row.setValueByColumnName("name", val_2);
     db.createTable("hocsinh", colDefs);
     UserTable tbl = db.getTableByName("hocsinh");
-    tbl.createRow(row);
+    tbl.insertRow(row);
+    tbl.insertRow(row_1);
 }
 
 

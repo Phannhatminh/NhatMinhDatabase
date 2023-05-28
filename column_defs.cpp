@@ -151,6 +151,10 @@ public:
         return columns_.size();
     }
 
+    string getColumnName(int i) {
+        return columnsName[i];
+    }
+
     ColumnDef getColumnDef(string ColumnName) {
         if (!columns_.count(ColumnName)) {
             throw out_of_range("Column index out of range");
@@ -222,7 +226,7 @@ public:
         }
     }
     
-    //encode the Row into the buffer
+    //encode the Row into the byte buffer
     char* encode() {
         ColumnDefs colDefs = getColumnDefs();
         int rowBufferSize = getColumnDefs().getRowSize();
@@ -328,7 +332,7 @@ private:
 
 class Table {
 public:
-    virtual void createRow(Row row) = 0;
+    virtual void insertRow(Row row) = 0;
     virtual Row readRow(int index) = 0;
     virtual int getRowCount() = 0;
     virtual void setRowCount(int n) = 0;
@@ -355,7 +359,7 @@ public:
         return columnDefs_;
     }
 
-    void createRow(Row row) override {
+    void insertRow(Row row) override {
         //handle the case where row has a different columndefs than Table
         if (row.getColumnDefs().isDifferentColumnDefs(columnDefs_)) {
             cout << "Row's structure doesn't fit Table's structure" << endl;
@@ -439,7 +443,7 @@ public:
         return columnDefs_;
     }
 
-    void createRow(Row row) override {
+    void insertRow(Row row) override {
         //handle the case where row has a different columndefs than Table
         if (row.getColumnDefs().isDifferentColumnDefs(columnDefs_)) {
             cout << "Row's structure doesn't fit Table's structure" << endl;
