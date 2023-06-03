@@ -6,7 +6,7 @@
 #include <fstream>
 
 using namespace std;
-
+//class for the real data processing unit of a column
 class Extent {
 public:
     Extent() {}
@@ -63,6 +63,8 @@ private:
     string extent_file_name;
 };
 
+//Class for the real data processing unit of a table. Each table corresponds to its only one data segment. 
+//Each segment has multiple extent, corresponding to each column of a table.
 class Segment {
 public:
     Segment() {}
