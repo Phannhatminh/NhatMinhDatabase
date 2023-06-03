@@ -6,6 +6,9 @@
             "command": "/usr/bin/clang++",
             "args": [
                 "-std=c++17",
+                "-lgtest",
+                "-lgtest_main",
+                "-pthread",
                 "-fcolor-diagnostics",
                 "-fansi-escape-codes",
                 "-g",

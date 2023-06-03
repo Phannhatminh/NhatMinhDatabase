@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
-#include "database.cpp"
+#include "test.cpp"
 
 using namespace std;
 
@@ -61,12 +61,12 @@ class Application {
 
 
 
-int main() {
+int main(int argc, char **argv) {
     //    /usr/bin/clang++ -std=c++17 -pthread -fcolor-diagnostics -fansi-escape-codes -g /Users/nhatminh/NhatMinhDatabase/main.cpp -o /Users/nhatminh/NhatMinhDatabase/main
     int i = 0;
     StorageEngine Engine;
-    Engine.getInstance().createDatabase("MySchool70");
-    Database db = Engine.getInstance().openDatabase("MySchool70");
+    Engine.getInstance().createDatabase("MySchool74");
+    Database db = Engine.getInstance().openDatabase("MySchool74");
     ColumnDef column_1("id", DBType :: INT, sizeof(int));
     ColumnDef column_2("name", DBType :: STRING, 30);
     ColumnDefs colDefs;
@@ -88,6 +88,9 @@ int main() {
     UserTable tbl = db.getTableByName("hocsinh");
     tbl.insertRow(row);
     tbl.insertRow(row_1);
+
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }
 
 

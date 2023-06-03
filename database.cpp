@@ -20,9 +20,11 @@ public:
        //Set up Default tables: 
     }
 
-    //Using FILE* to create column's files
+    //Using FILE* to create column's files, takes table name and a columndefs as input to create files
+    //Each file holds the data for a column of a table in a database (1, 1, 1)
     void createTable(string table_name, ColumnDefs colDefs_Of_Table) {
         bool exist = true;
+        bool success = true;
         int size = colDefs_Of_Table.columnsName.size();
         for (int i = 0; i < size; i++) {
             //set up file located in dir
@@ -38,34 +40,41 @@ public:
                 if (outFile != nullptr) {
                     std::cout << "Column " << filename << " created successfully in directory " << nameOfDatabase << std::endl;
                     exist = exist && true;
+                    success = success && true;
                 }
                 else {
                     std::cerr << "Failed to create column " << filename << " of Table " << table_name << " in database " << nameOfDatabase << std::endl;
                     exist = exist && false;
+                    success = success && false;
                 }
             }
             else {
                 fclose(file);
-                cout << "Table " << table_name << " has already exist in database " << nameOfDatabase << endl;
+                exist = exist && true;
+                success = success && false;
             }
         }
 
         // Check the exist value
-        if (exist) {
+        if (success) {
             std::cout << "Table " << table_name << " created successfully in database " << nameOfDatabase << std::endl;
 
             // Update the Sys.Tables
             UpdateSystemTables(table_name, colDefs_Of_Table);
+        }
+        else if (exist) {
+            cout << "Table " << table_name << " has already exist in database " << nameOfDatabase << endl;
         }  
         else {
             std::cerr << "Database " << nameOfDatabase << " does not exist." << std::endl;
         }
     }
 
-    //method to get a table in a database
+    //method to get a table in a database, takes table name as imput, return an user table
     UserTable getTableByName(string table_name) {
         int table_size = 0;
         //Scan the sysTableOfTables for name
+        //Setting up sys_tables and sys_columns
         SystemTable sys_tables = getSysTables();
         SystemTable sys_columns = getSysColumns();
         sys_tables.setDataSegment();
@@ -76,16 +85,16 @@ public:
         int row_count;
         int sys_table_row_count = sys_tables.readRow(0).getValueByColumnName("Row_Count").getIntValue();
         int sys_column_row_count = sys_tables.readRow(1).getValueByColumnName("Row_Count").getIntValue();
+        bool exist = false;
+        //Scan the sys_tables for table_name
         for (int i = 0; i < sys_table_row_count; i++) {
             if (sys_tables.readRow(i).getValueByColumnName("Table_Name").getStringValue() == table_name) {
                 row_count = sys_tables.readRow(i).getValueByColumnName("Row_Count").getIntValue();
+                exist = true;
                 break;
             }
-            else {
-                cout << "not yet baby";
-            }
         }
-        //Scan the sysTableOfColumns
+        //Scan the sysTableOfColumns to retreieve a columnDefs for creating table object (Table(columnDefs))
         for (int i = 0; i < sys_column_row_count; i++) {
             if (sys_columns.readRow(i).getValueByColumnName("Column_Table_Name").getStringValue() == table_name) {
                 nameList.push_back(sys_columns.readRow(i).getValueByColumnName("Column_Name").getStringValue());
@@ -123,7 +132,42 @@ public:
         //Set ColumnDefs for table
         table.setColumnDefs(columnDefs);
         //get the table
-        return table;
+        if (exist) {
+            //if the table exists in the database
+            return table;
+        }
+        else {
+            //if not...
+            throw std::runtime_error("Table " + table_name + " does not exist in database " + nameOfDatabase);
+        }
+    }
+
+    void UpdateRowCountOfUserTable(string table_name) {
+        //set up sys_tables
+        int index = 0;
+        DBValue table_name_value;
+        DBValue row_count_value;
+        SystemTable sys_tables = getSysTables();
+        sys_tables.setDataSegment();
+        int row_count;
+        int sys_table_row_count = sys_tables.readRow(0).getValueByColumnName("Row_Count").getIntValue();
+        //Scan the systable for table_name:
+        for (int i = 0; i < sys_table_row_count; i++) {
+            //access and update the row_count
+            if (sys_tables.readRow(i).getValueByColumnName("Table_Name").getStringValue() == table_name) {
+                row_count = sys_tables.readRow(i).getValueByColumnName("Row_Count").getIntValue() + 1;
+                index = i;
+            }         
+        }
+        table_name_value.setString(table_name);
+        row_count_value.setInt(row_count);
+        //Create the new row
+        Row new_row;
+        new_row.setColumnDefs(sys_tables.getColumnDefs());
+        new_row.setValueByColumnName("Table_Name", table_name_value);
+        new_row.setValueByColumnName("Row_count", row_count_value);
+        //Update the row
+        sys_tables.updateRow(new_row, index);
     }
 
     void eraseTableByName(string table_name) {}
@@ -151,6 +195,7 @@ private:
     ColumnDefs columnDefsTables;
     ColumnDefs columnDefsColumns;
 
+    //function for building system tables in the database. auto called when create a new database.
     void BuildSysTableOfTables() {
         //Set up ColumnDefs objects
         ColumnDef column_1("Table_Name", DBType :: STRING, 30);
@@ -525,19 +570,30 @@ public:
             return MyCurrentDatabase;
         }
         else {
-            cout << "Database " << name << " does not exist" << endl;
-            return MyCurrentDatabase;
+            throw std::runtime_error("Database " + name + " does not exist");
         }
     }
 
+    void createTable(string database_name, string table_name, ColumnDefs column_defs) {
+        Database db = openDatabase(database_name);
+        db.setName(database_name);
+        db.createTable(table_name, column_defs);
+    }
+
+    UserTable getTable(string database_name, string table_name) {
+        Database db = openDatabase(database_name);
+        db.setName(database_name);
+        return db.getTableByName(table_name);
+    }
+
     void InsertRow(string database_name, string table_name, Row row) {
-        createDatabase(database_name);
         Database db = openDatabase(database_name);
         db.setName(database_name);
         db.createTable(table_name, row.getColumnDefs());
         UserTable this_table = db.getTableByName(table_name);
         row.setColumnDefs(this_table.getColumnDefs());
         this_table.insertRow(row);
+        db.UpdateRowCountOfUserTable(table_name);
     }
 
     Row ReadRow(string database_name, string table_name, int index) {
@@ -549,14 +605,6 @@ public:
         return row;
     }
 
-    Row createRow(vector<DBValue> val_vec, ColumnDefs column_defs) {
-        Row row;
-        row.setColumnDefs(column_defs);
-        for (int i = 0; i < val_vec.size(); i++) {
-            row.setValueByColumnName(column_defs.columnsName[i], val_vec[i]);
-        }
-        return row;
-    }
 private:
     
     Database MyCurrentDatabase;

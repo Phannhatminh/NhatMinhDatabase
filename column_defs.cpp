@@ -226,7 +226,7 @@ public:
         }
     }
     
-    //encode the Row into the byte buffer
+    //encode the Row (which is a list of DBValue) into the byte buffer (binary array)
     char* encode() {
         ColumnDefs colDefs = getColumnDefs();
         int rowBufferSize = getColumnDefs().getRowSize();
@@ -268,8 +268,8 @@ public:
         return rowBuffer_;
     }
 
-    //decode from byte array to field value in Row
-    //Deckde build row xong return ra row với mấy cái map trống trơn.
+    /*decode from byte array (binary array) to build back the row (the list of DBValue)
+    takes the buffer as input and build back by the columndefs of the row */
     void decode(char* buffer) {
         DBValue value;
         int row_length = columnDefs_.columns_.size();
@@ -309,7 +309,7 @@ private:
         //check if wrong input that mismatch the expected structure
         if (val_Vec.size() != columnDefs_.columns_.size()) {    
             cerr << "Error: Input vector has different size than value_ vector" << endl;
-            return;
+            throw std::runtime_error("Error: Input vector has different size than value_ vector");
         }
         else {
             int size = columnDefs_.columnsName.size();
@@ -338,6 +338,7 @@ public:
     virtual void setRowCount(int n) = 0;
 };
 
+//Derived class of Table, class of User defined table
 class UserTable : public Table {
 public:
     UserTable()
@@ -351,6 +352,10 @@ public:
         table_name = name;
     }
 
+    string getName() {
+        return table_name;
+    }
+
     void setColumnDefs(ColumnDefs columndefs) {
         columnDefs_ = columndefs;
     }
@@ -359,10 +364,12 @@ public:
         return columnDefs_;
     }
 
+    //function to insert a row to the end of the table
     void insertRow(Row row) override {
         //handle the case where row has a different columndefs than Table
         if (row.getColumnDefs().isDifferentColumnDefs(columnDefs_)) {
-            cout << "Row's structure doesn't fit Table's structure" << endl;
+            cout << "Row's structure doesn't fit Table's " + table_name + " structure" << endl;
+            throw std::runtime_error("Row's structure doesn't fit Table's " + table_name + " structure");
         }
         else {
             //encode Row into Byte Buffer
@@ -374,6 +381,7 @@ public:
         }
     }
 
+    //function to read a row at a specific index of the table
     Row readRow(int index) override {
         Row row;
         row.setColumnDefs(columnDefs_);
@@ -394,7 +402,7 @@ public:
         DatabaseName = name;
     }
 
-    //set and get the corresponding data segment
+    //set and get the corresponding data segment (the data processing part of a table)
     Segment setDataSegment() {
         Segment segment;
         map<int, int> columns_width;
@@ -424,11 +432,16 @@ private:
     string DatabaseName;
 };
 
+//Derived class of Table, class of system's table
 class SystemTable : public Table {
 public:
     SystemTable() {}
     SystemTable(ColumnDefs col_Defs) {
         columnDefs_ = col_Defs;
+    }
+
+    string getName() {
+        return table_name;
     }
 
     void setName(string name) {
@@ -447,6 +460,7 @@ public:
         //handle the case where row has a different columndefs than Table
         if (row.getColumnDefs().isDifferentColumnDefs(columnDefs_)) {
             cout << "Row's structure doesn't fit Table's structure" << endl;
+            throw std::runtime_error("Row's structure doesn't fit Table's " + table_name + " structure");
         }
         else {
             //encode Row into Byte Buffer
@@ -461,7 +475,8 @@ public:
     void updateRow(Row row, int index) {
         //handle the case where row has a different columndefs than Table
         if (row.getColumnDefs().isDifferentColumnDefs(columnDefs_)) {
-            cout << "Row's structure doesn't fit Table's structure" << endl;
+            cout << "Row's structure doesn't fit Table's " + table_name + " structure" << endl;
+            throw std::runtime_error("Row's structure doesn't fit Table's " + table_name + " structure");
         }
         else {
             //encode Row into Byte Buffer
@@ -491,7 +506,7 @@ public:
         DatabaseName = name;
     }
 
-    //get the corresponding data segment
+    //set and get the corresponding data segment (the data processing part of a table)
     Segment setDataSegment() {
         Segment segment;
         map<int, int> columns_width;

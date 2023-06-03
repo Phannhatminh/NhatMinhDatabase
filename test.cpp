@@ -18,7 +18,9 @@ TEST(RowTest, TestEncodeDecode) {
     DBValue value_1(1);
     DBValue value_2("Phan Nhat Minh");
     DBValue value_3(18);
-    row_.SetValue({value_1, value_2, value_3});
+    row_.setValueByColumnName("id", value_1);
+    row_.setValueByColumnName("name", value_2);
+    row_.setValueByColumnName("age", value_3);
 
     //Test encode and decode functions
     char* buffer = row_.encode();
@@ -49,41 +51,99 @@ TEST(RowTest, TestEncodeDecode) {
     EXPECT_EQ(buffer[36], '\0');
     EXPECT_EQ(buffer[37], '\0');
     row_.decode(buffer);
-    vector<DBValue> val_Vec = row_.getValue();
-    EXPECT_EQ(val_Vec[0].getIntValue(), 1);
-    EXPECT_EQ(val_Vec[1].getStringValue(), "Phan Nhat Minh");
-    EXPECT_EQ(val_Vec[2].getIntValue(), 18);
+    EXPECT_EQ(row_.getValueByColumnName("id").getIntValue(), 1);
+    EXPECT_EQ(row_.getValueByColumnName("name").getStringValue(), "Phan Nhat Minh");
+    EXPECT_EQ(row_.getValueByColumnName("age").getIntValue(), 18);
 }
 
-TEST(Read_WriteTest, Test_Write_Read_Cycle) {
-    ColumnDef column_1("id", DBType :: INT, sizeof(int));
-    ColumnDef column_2("name", DBType :: STRING, 30);
-    ColumnDefs colDefs;
-    colDefs.addColumn(column_1);
-    colDefs.addColumn(column_2);
-    DBValue val_1(1);
-    DBValue val_2("Phan Nhat Minh");
-    vector<DBValue> vec_of_val;
-    vec_of_val.push_back(val_1);
-    vec_of_val.push_back(val_2);
+class StorageEngineTest : public ::testing::Test {
+protected:
+    void SetUp() override {
+        //create a database
+        strengine.getInstance().createDatabase("TestingDatabase");
 
-    string name = "TestingDatabase";
-    int result = mkdir(name.c_str(), 0777);
-    string file_name_1 = "TestingDatabase/TestingTable1-id.bin";
-    string file_name_2 = "TestingDatabase/TestingTable1-name.bin";
-    FILE* file_1 = fopen(file_name_1.c_str(), "wb+");
-    FILE* file_2 = fopen(file_name_2.c_str(), "wb+");
-    UserTable table;
-    table.setName("TestingTable");
-    table.setDatabaseName("TestingDatabase");
-    table.setColumnDefs(colDefs);
-    table.createRow(vec_of_val);
-    Row* row = table.readRow(0);
-    int value = row -> getValue()[0].getIntValue();
-    string str_value = row -> getValue()[1].getStringValue();
-    EXPECT_EQ(value, 1);
-    EXPECT_EQ(str_value, "Phan Nhat Minh");
-} // map iterator error confirmed
+        // Add column definitions to colDefs object
+        ColumnDef col_1("Name", DBType :: STRING, 30);
+        ColumnDef col_2("Age", DBType :: INT, sizeof(int));
+        colDefs.addColumn(col_1);
+        colDefs.addColumn(col_2);
+
+        // Set up any necessary test fixtures
+        Database db = strengine.openDatabase("TestingDatabase");
+        db.createTable("TestingTable", colDefs);
+
+        // initialise the table
+        table.setDatabaseName("TestingDatabase");
+        table.setName("TestingTable");
+        table.setColumnDefs(colDefs);
+
+        //Initialise the row
+        row.setColumnDefs(colDefs);
+        DBValue value_1("Phan Nhat Minh");
+        DBValue value_2(18);
+        row.setValueByColumnName("Name", value_1);
+        row.setValueByColumnName("Age", value_2);
+
+        //add the row to the table
+        table.insertRow(row);
+        //table.insertRow(empty_row);
+    }
+
+    // Declare any necessary variables and objects
+    StorageEngine strengine;
+    ColumnDefs colDefs;
+    UserTable table = strengine.getTable("TestingDatabase", "TestingTable");
+    Row row;
+    Row incorrect_row;
+    Row retrievedRow = table.readRow(0);
+};
+
+//Test case for open database that already exist in the storage engine
+TEST_F(StorageEngineTest, openDatabase) {
+    Database db = strengine.openDatabase("TestingDatabase");
+    EXPECT_EQ(db.getName(), "TestingDatabase");
+}
+
+//Test case for opening database that haven't exist in the storage engine
+TEST_F(StorageEngineTest, openNotExistingDatabase) {
+    EXPECT_THROW(strengine.openDatabase("NotExistingDatabase"), std::runtime_error);
+}
+
+//Test case for opening an existing table
+TEST_F(StorageEngineTest, getTable) {
+    EXPECT_EQ(table.getName(), "TestingTable");
+    EXPECT_EQ(table.getRowCount(), 1);
+    EXPECT_EQ(table.getColumnDefs().getColumnCount(), 2);
+}
+
+//Test case for opening a nonexisting table
+TEST_F(StorageEngineTest, getNonExistingTable) {
+    EXPECT_THROW(strengine.getTable("NotExistingDatabase", "NotExistingTable"), std::runtime_error);
+    EXPECT_THROW(strengine.getTable("TestingDatabase", "NotExistingTable"), std::runtime_error);
+    EXPECT_THROW(strengine.getTable("NotExistingDatabase", "TestingTable"), std::runtime_error);
+}
+
+// Test case to check if row insertion and reading work correctly
+TEST_F(StorageEngineTest, InsertAndReadRow) {
+    EXPECT_EQ(table.getRowCount(), 1); // Verify that the row count is incremented
+    DBValue retrieved_value_2 = retrievedRow.getValueByColumnName("Age");
+    DBValue retrieved_value_1 = retrievedRow.getValueByColumnName("Name");
+    EXPECT_EQ(retrieved_value_1.getStringValue(), "Phan Nhat Minh");
+    EXPECT_EQ(retrieved_value_2.getIntValue(), 18);
+}
+
+//Test case for inserting row without the correct structure
+TEST_F(StorageEngineTest, IncorrectInsertion) {
+    EXPECT_THROW(table.insertRow(incorrect_row), runtime_error);
+}
+
+// Test case to check if the data segment is set correctly
+TEST_F(StorageEngineTest, SetDataSegment) {
+    Segment segment = table.setDataSegment();
+    // Verify that the segment is set up correctly
+    // ...
+    // Add more assertions if needed
+}
 
 int main2(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);

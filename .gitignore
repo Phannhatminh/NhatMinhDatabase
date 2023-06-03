@@ -3,3 +3,5 @@ main.
 ./build/
 MySchool*
 build
+TestDatabase*
+TestingDatabase*
