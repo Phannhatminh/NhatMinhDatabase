@@ -82,7 +82,7 @@ public:
         vector<string> nameList;
         vector<DBType::Type> typeList;
         vector<int> widthList;
-        int row_count;
+        int row_count = 0;
         int sys_table_row_count = sys_tables.readRow(0).getValueByColumnName("Row_Count").getIntValue();
         int sys_column_row_count = sys_tables.readRow(1).getValueByColumnName("Row_Count").getIntValue();
         bool exist = false;
@@ -131,6 +131,8 @@ public:
         table.setName(table_name);
         //Set ColumnDefs for table
         table.setColumnDefs(columnDefs);
+        //Set the row count
+        table.setRowCount(row_count);
         //get the table
         if (exist) {
             //if the table exists in the database
@@ -606,7 +608,6 @@ public:
     }
 
 private:
-    
     Database MyCurrentDatabase;
     // Disable copy and move constructors
     StorageEngine(const StorageEngine&) = delete;

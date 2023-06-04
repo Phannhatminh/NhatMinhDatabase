@@ -199,7 +199,13 @@ public:
     }
 
     void setColumnDefs(ColumnDefs col_defs) {
+        //set the columnDefs
         columnDefs_ = col_defs;
+        DBValue init_value;
+        //set up the maps of the row
+        /*for (int i = 0; i < col_defs.getColumnCount(); i++) {
+            this -> setValueByColumnName(col_defs.columnsName[i], init_value);
+        }*/
     }
 
     void setValueByColumnName(string name, DBValue value) {
