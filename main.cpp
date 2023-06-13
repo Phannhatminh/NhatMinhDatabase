@@ -34,31 +34,33 @@ class Setting {
 };
 
 class Application {
-    public:
-        static Application& getInstance() {
-            static Application instance;
-            return instance;
-        }
+public:
+    static Application& getInstance() {
+        static Application instance;
+        return instance;
+    }
 
-        void initialize(int argc, char* argv[]) {
-            Setting::getInstance().setValue("query", argv[2]);
-            Setting::getInstance().setValue("data", argv[4]);
-        }
+    void initialize(int argc, char* argv[]) {
+        Setting::getInstance().setValue("query", argv[2]);
+        Setting::getInstance().setValue("data", argv[4]);
+    }
 
-        void run() {
-            //Implementation of the application
-        }
+    void run() {
+        //Implementation of the application
+    }
 
-    private:
-        Application() {
-            //Constructor logic
-        };
+private:
+    Application() {
+        //Constructor logic
+    };
 
-        Application(const Application&) = delete;
-        Application& operator=(const Application&) = delete;
+    Application(const Application&) = delete;
+    Application& operator=(const Application&) = delete;
 };
 
 int main(int argc, char **argv) {
+    StorageEngine strengine;
+    strengine.getInstance().createDatabase("TestingDatabase");
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

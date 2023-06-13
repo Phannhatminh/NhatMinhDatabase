@@ -102,8 +102,16 @@ public:
         return name_;
     }
 
+    void setName(string column_name) {
+        name_ = column_name;
+    }
+
     DBType::Type getType() {
         return type_;
+    }
+
+    void setType(DBType::Type column_type) {
+        type_ = column_type;
     }
 
     int getWidth() {
@@ -117,6 +125,10 @@ public:
             return 30;
         };
         return 0;
+    }
+
+    void setWidth(int column_width) {
+        width_ = column_width;
     }
 
     bool isDifferentColumnDef(ColumnDef other) {
@@ -201,7 +213,7 @@ public:
     void setColumnDefs(ColumnDefs col_defs) {
         //set the columnDefs
         columnDefs_ = col_defs;
-        DBValue init_value;
+        //DBValue init_value;
         //set up the maps of the row
         /*for (int i = 0; i < col_defs.getColumnCount(); i++) {
             this -> setValueByColumnName(col_defs.columnsName[i], init_value);
@@ -209,7 +221,7 @@ public:
     }
 
     void setValueByColumnName(string name, DBValue value) {
-        //Check if there exists a column with name name in Table
+        //Check if there exists a column with name name in Row
         if (values_.find(name) != values_.end()) {
             values_[name] = value;
         }
@@ -305,35 +317,12 @@ public:
 
 private:
     ColumnDefs columnDefs_;
+    //
     map<string, DBValue> values_;
+    //
     map<int, string> values_name;
     map<string, ColumnDef> columns = columnDefs_.columns_;
     char* rowBuffer_;
-
-    //Set a vector of values into row
-    void SetValue(vector<DBValue> val_Vec) {
-        //check if wrong input that mismatch the expected structure
-        if (val_Vec.size() != columnDefs_.columns_.size()) {    
-            cerr << "Error: Input vector has different size than value_ vector" << endl;
-            throw std::runtime_error("Error: Input vector has different size than value_ vector");
-        }
-        else {
-            int size = columnDefs_.columnsName.size();
-            for (int i = 0; i < size; i++) {
-                values_name.insert({i, columnDefs_.columnsName[i]});
-                values_.insert({columnDefs_.columnsName[i], val_Vec[i]});
-            }
-        }
-    }
-
-    // get Value
-    vector<DBValue> getValue() {
-        vector<DBValue> val_Vec;
-        for (int i = 0; i < values_.size(); i++) {
-            val_Vec.push_back(values_[values_name[i]]);
-        }
-        return val_Vec;
-    }
 };
 
 class Table {
@@ -374,8 +363,8 @@ public:
     void insertRow(Row row) override {
         //handle the case where row has a different columndefs than Table
         if (row.getColumnDefs().isDifferentColumnDefs(columnDefs_)) {
-            cout << "Row's structure doesn't fit Table's " + table_name + " structure" << endl;
-            throw std::runtime_error("Row's structure doesn't fit Table's " + table_name + " structure");
+            cout << "Row's structure doesn't fit Table " + table_name + "'s structure" << endl;
+            throw std::runtime_error("Row's structure doesn't fit Table's " + table_name + "'s structure");
         }
         else {
             //encode Row into Byte Buffer
@@ -434,7 +423,6 @@ private:
     ColumnDefs columnDefs_;
     Segment DataSegment;
     Segment Index;
-    map<string, Extent> table_extent_list;
     string DatabaseName;
 };
 
@@ -466,7 +454,7 @@ public:
         //handle the case where row has a different columndefs than Table
         if (row.getColumnDefs().isDifferentColumnDefs(columnDefs_)) {
             cout << "Row's structure doesn't fit Table's structure" << endl;
-            throw std::runtime_error("Row's structure doesn't fit Table's " + table_name + " structure");
+            throw std::runtime_error("Row's structure doesn't fit Table " + table_name + " structure");
         }
         else {
             //encode Row into Byte Buffer
@@ -482,7 +470,7 @@ public:
         //handle the case where row has a different columndefs than Table
         if (row.getColumnDefs().isDifferentColumnDefs(columnDefs_)) {
             cout << "Row's structure doesn't fit Table's " + table_name + " structure" << endl;
-            throw std::runtime_error("Row's structure doesn't fit Table's " + table_name + " structure");
+            throw std::runtime_error("Row's structure doesn't fit Table " + table_name + "'s structure");
         }
         else {
             //encode Row into Byte Buffer
@@ -538,6 +526,5 @@ private:
     ColumnDefs columnDefs_;
     Segment DataSegment;
     Segment Index;
-    map<string, Extent> table_extent_list;
     string DatabaseName;
 };

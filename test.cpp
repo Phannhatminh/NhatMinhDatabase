@@ -6,7 +6,7 @@
 #include <cstring>
 #include <stdio.h>
 
-#include "database.cpp"
+#include "query_exe_plan.cpp"
 
 TEST(RowTest, TestEncodeDecode) {
     // Create a ColumnDefs object, a Table object, a Row object to test the row buffer:
@@ -170,9 +170,29 @@ TEST_F(StorageEngineTest, mainFunction) {
     row.setValueByColumnName("name", val_2);
     db.createTable("hocsinh", colDefs);
     UserTable tbl = db.getTableByName("hocsinh");
-    tbl.insertRow(row);
-    tbl.insertRow(row_1);
+    Engine.InsertRow("MySchool", "hocsinh", row);
+    Engine.InsertRow("MySchool", "hocsinh", row_1); 
+    //tbl.insertRow(row); //Update Row_count by table
+    //tbl.insertRow(row_1);
+}
 
-    StorageEngine strengine;
-    strengine.getInstance().createDatabase("TestingDatabase");
+class Query_ExecutionPlanTest : public ::testing::Test {
+public:
+    QueryExecutionPlan plan;
+    StorageEngine Engine;
+};
+
+TEST_F(Query_ExecutionPlanTest, FROM_Test) {
+    ResultSet result = plan.execute_FROM_clause("MySchool", "hocsinh");
+    UserTable table = Engine.getTable("MySchool", "hocsinh");
+    EXPECT_EQ(result.getName(), "hocsinh");
+    EXPECT_EQ(result.getRowCount(), table.getRowCount());
+    EXPECT_EQ(result.readRow(0).getValueByColumnName("id").getIntValue(), 1);
+    EXPECT_EQ(result.readRow(1).getValueByColumnName("id").getIntValue(), 2);
+    EXPECT_EQ(result.readRow(0).getValueByColumnName("name").getStringValue(), "Phan Nhat Minh");
+    EXPECT_EQ(result.readRow(1).getValueByColumnName("name").getStringValue(), "Pham Duy Long");
+}
+
+TEST_F(Query_ExecutionPlanTest, SELECT_Test) {
+    ResultSet result = plan.execute_SELECT_clause(plan.execute_FROM_clause("MySchool", "hocsinh"), "name, id");
 }

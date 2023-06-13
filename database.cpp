@@ -162,12 +162,14 @@ public:
             }         
         }
         table_name_value.setString(table_name);
+        table_name_value.setType(DBType::STRING);
         row_count_value.setInt(row_count);
+        row_count_value.setType(DBType::INT);
         //Create the new row
         Row new_row;
         new_row.setColumnDefs(sys_tables.getColumnDefs());
         new_row.setValueByColumnName("Table_Name", table_name_value);
-        new_row.setValueByColumnName("Row_count", row_count_value);
+        new_row.setValueByColumnName("Row_Count", row_count_value);
         //Update the row
         sys_tables.updateRow(new_row, index);
     }
@@ -588,6 +590,7 @@ public:
         return db.getTableByName(table_name);
     }
 
+    //Insert a row to a table of a database
     void InsertRow(string database_name, string table_name, Row row) {
         Database db = openDatabase(database_name);
         db.setName(database_name);
