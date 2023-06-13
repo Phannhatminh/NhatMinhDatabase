@@ -90,14 +90,14 @@ private:
 template <typename T>
 class Context {
 private:
-    Row current_row;
+    Row* current_row;
 public:
-    void setRowIntoContext(Row row) {
-        current_row = row;
+    void SetContext(Row row) {
+        current_row = &row;
     }
 
-    bool evaluateBoolExpression(IsGreaterThanINT<bool> expression) {
-        return expression.evaluate();
+    T evaluateExpression(Expression<T> * expression) {
+        return expression -> evaluate();
     }
 };
 
@@ -167,8 +167,8 @@ public:
         Context<bool> context;
         for (int i = 0; i < row_count; i++) {
             Row curr_row = result_set.readRow(i);
-            context.setRowIntoContext(curr_row);
-            if(context.evaluateBoolExpression(bool_ex) == true) {
+            context.SetContext(curr_row);
+            if(context.evaluateExpression(&bool_ex) == true) {
                 new_result_set.insertRow(curr_row);
                 new_row_count += 1;
             }
