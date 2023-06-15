@@ -16,12 +16,12 @@ public:
 template <typename U>
 class Constant : public Expression<U> {
 public:
-    Constant(U val) {
-        value = val;
-    }
-
     U evaluate() const override {
         return value;
+    }
+
+    void setConstantValue(int const_value) {
+        value = const_value;
     }
 private:
     U value;
@@ -30,9 +30,6 @@ private:
 template <typename V>
 class Variable : public Expression<V> {
 public:
-    Variable(V val) {
-        value = val;
-    }
     V evaluate() const override {
         return value;
     }
@@ -43,11 +40,12 @@ private:
 template <int>
 class IntVariable : public Variable<int> {
 public:
-    IntVariable(int val) {
-        value = val;
-    }
-    int evaluate() const {
+    int evaluate() const override {
         return value;
+    }
+
+    void setValue(int var) {
+        value = var;
     }
 private:
     int value;
@@ -70,17 +68,21 @@ public:
 template <typename W>
 class IsGreaterThanINT : public Expression<bool> {
 public:
-    IsGreaterThanINT(IntVariable<0> int_var, Constant<int> cons) {
-        int_variable = int_var;
-        constant = cons;
-    }
-    bool evaluate() const {
+    bool evaluate() const override {
         if (int_variable.evaluate() > constant.evaluate()) {
             return true;
         }
         else {
             return false;
         }
+    }
+
+    void setVariable(int var) {
+        int_variable.setValue(var);
+    }
+
+    void setConstant(Constant<int> cons) {
+        constant = cons;
     }
 private:
     IntVariable<0> int_variable;
@@ -158,15 +160,19 @@ public:
     }
 
     //the challenging part
-    ResultSet execute_WHERE_clause(ResultSet result_set, IsGreaterThanINT<bool> bool_ex) {
+    ResultSet execute_WHERE_clause(ResultSet result_set, string columnName, Constant<int> constant) {
+        IsGreaterThanINT<bool> bool_ex; 
+        bool_ex.setConstant(constant);
         ResultSet new_result_set;
         int new_row_count = 0;
+        new_result_set.setRowCount(0);
         new_result_set.setColumnDefs(result_set.getColumnDefs());
         new_result_set.setName(result_set.getName());
         int row_count = result_set.getRowCount();
         Context<bool> context;
         for (int i = 0; i < row_count; i++) {
             Row curr_row = result_set.readRow(i);
+            bool_ex.setVariable(curr_row.getValueByColumnName(columnName).getIntValue());
             context.SetContext(curr_row);
             if(context.evaluateExpression(&bool_ex) == true) {
                 new_result_set.insertRow(curr_row);

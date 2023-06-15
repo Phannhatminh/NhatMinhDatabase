@@ -44,6 +44,7 @@ public:
         }
         else {
             rows[row_count] = row;
+            row_count += 1;
         }
     }
 

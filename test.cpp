@@ -193,6 +193,12 @@ TEST_F(Query_ExecutionPlanTest, FROM_Test) {
     EXPECT_EQ(result.readRow(1).getValueByColumnName("name").getStringValue(), "Pham Duy Long");
 }
 
+TEST_F(Query_ExecutionPlanTest, WHERE_Test) {
+    Constant<int> c;
+    c.setConstantValue(1);
+    ResultSet result = plan.execute_WHERE_clause(plan.execute_FROM_clause("MySchool", "hocsinh"), "id", c);
+}
+
 TEST_F(Query_ExecutionPlanTest, SELECT_Test) {
     ResultSet result = plan.execute_SELECT_clause(plan.execute_FROM_clause("MySchool", "hocsinh"), "name, id");
 }
