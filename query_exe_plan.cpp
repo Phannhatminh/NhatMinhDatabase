@@ -7,89 +7,192 @@
 
 using namespace std;
 
-template <typename T>
 class Expression {
 public:
-    virtual T evaluate() const = 0;
-};
+    virtual Expression* evaluate() = 0;
 
-template <typename U>
-class Constant : public Expression<U> {
-public:
-    U evaluate() const override {
-        return value;
-    }
+    virtual string getType() = 0;
 
-    void setConstantValue(int const_value) {
-        value = const_value;
+    virtual void setType(string type_name) {
+        Type = type_name;
     }
 private:
-    U value;
+    string Type;
+    Expression* expr;
 };
 
-template <typename V>
-class Variable : public Expression<V> {
+class AlgebraicExpression : public Expression {
 public:
-    V evaluate() const override {
-        return value;
+private:
+
+};
+
+class Constant : public Expression {
+public:
+    Expression* evaluate() override {
+        return this;
+    }
+};
+
+class IntConstant : public Constant {
+public:
+    void setConstantValue(int value) {
+        constant = value;
+    }
+
+    int getConstantValue() {
+        return constant;
     }
 private:
-    V value;
+    int constant;
 };
 
-template <int>
-class IntVariable : public Variable<int> {
+class FloatConstant : public Constant {
 public:
-    int evaluate() const override {
-        return value;
+    void setConstantValue(float value) {
+        constant = value;
     }
 
-    void setValue(int var) {
-        value = var;
+    float getConstantValue() {
+        return constant;
     }
 private:
-    int value;
+    float constant;
 };
 
-template <typename W>
-class CompareOperator : public Expression<bool> {
+class StringConstant : public Constant {
 public:
-    virtual bool compare(W left, W right) const = 0;
-    bool evaluate() {
-        W leftValue = getLeftOperand();
-        W rightValue = getRightOperand();
-        return compare(leftValue, rightValue);
+    void setConstantValue(string value) {
+        constant = value;
     }
 
-    virtual W getLeftOperand() const = 0;
-    virtual W getRightOperand() const = 0;
+    string getConstantValue() {
+        return constant;
+    }
+private:
+    string constant;
 };
 
-template <typename W>
-class IsGreaterThanINT : public Expression<bool> {
+class LogicalConstant : public Constant {
 public:
-    bool evaluate() const override {
-        if (int_variable.evaluate() > constant.evaluate()) {
-            return true;
+    void setConstantValue(bool value) {
+        constant = value;
+    }
+
+    bool getConstantValue() {
+        return constant;
+    }
+private:
+    bool constant;
+};
+
+class Variable : public Expression {
+public:
+    Expression* evaluate() override {
+        return const_value;
+    }
+    string getType() override {
+        return "variable";
+    }
+private:
+    Constant* const_value;
+};
+
+class IntVariable : public Variable {
+public:
+    IntConstant* evaluate() {
+        return int_const_value;
+    }
+
+    void setVariableValue(int value) {
+        int_const_value -> setConstantValue(value);
+    }
+    string getType() override {
+        return "int";
+    }
+private:
+    IntConstant* int_const_value;
+};
+
+class FloatVariable : public Variable {
+public:
+    Expression* evaluate() {
+        return float_const_value;
+    }
+
+    void setVariableValue(float value) {
+        float_const_value -> setConstantValue(value);
+    }
+private:
+    FloatConstant* float_const_value;
+};
+
+class StringVariable : public Variable {
+public:
+    Expression* evaluate() {
+        return string_const_value;
+    }
+
+    void setVariableValue(string value) {
+        string_const_value -> setConstantValue(value);
+    }
+private:
+    StringConstant* string_const_value;
+};
+
+class LogicalVariable : public Variable {
+public:
+    Expression* evaluate() {
+        return logic_const_value;
+    }
+
+    void setVariableValue(bool value) {
+        logic_const_value -> setConstantValue(value);
+    }
+private:
+    LogicalConstant* logic_const_value;
+};
+
+class BinaryOperator : public Expression {
+public:
+    Expression* left_hand_side;
+    Expression* right_hand_side;
+    void set_up(Expression* left, Expression* right) {
+        left_hand_side = left;
+        right_hand_side = right;
+    }
+private:
+};
+
+class IsGreaterThanINT : public Expression {
+public:
+    LogicalConstant* evaluate() override {
+        if (int_var -> evaluate() -> getConstantValue() > int_constant -> getConstantValue()) {
+            logic_constant -> setConstantValue(true);
         }
         else {
-            return false;
+            logic_constant -> setConstantValue(false);
         }
+        return logic_constant;
     }
 
-    void setVariable(int var) {
-        int_variable.setValue(var);
+    string getType() override {
+        return "logic";
     }
 
-    void setConstant(Constant<int> cons) {
-        constant = cons;
+    void setConstant(IntConstant* constant) {
+        int_constant = constant;
+    }
+
+    void setVariable(IntVariable* var) {
+        int_var = var;
     }
 private:
-    IntVariable<0> int_variable;
-    Constant<int> constant;
+    IntVariable* int_var;
+    IntConstant* int_constant;
+    LogicalConstant* logic_constant;
 };
 
-template <typename T>
 class Context {
 private:
     Row* current_row;
@@ -98,17 +201,30 @@ public:
         current_row = &row;
     }
 
-    T evaluateExpression(Expression<T> * expression) {
+    Expression* evaluateExpression(Expression * expression) {
         return expression -> evaluate();
     }
 };
 
 class QueryExecutionPlan {
 private:
+protected:
     StorageEngine engine;
+    ResultSet rslt_set;
 public:
-    ResultSet execute_FROM_clause(string database_name, string table_name) {
-        ResultSet rslt_set;
+    virtual bool execute() = 0;
+
+    ResultSet getResultSet() {
+        return rslt_set;
+    }
+};
+
+class FROM_Execution : public QueryExecutionPlan {
+private:
+    string database_name; 
+    string table_name;
+public:
+    bool execute() override {
         UserTable table =  engine.getTable(database_name, table_name);
         ColumnDefs col_defs = table.getColumnDefs();
         rslt_set.setName(table_name);
@@ -118,17 +234,53 @@ public:
             Row current_row = engine.ReadRow(database_name, table_name, i);
             rslt_set.insertRowIntoIndex(current_row, i);
         }
-        return rslt_set;
+        return true;
     }
+};
 
-    ResultSet execute_SELECT_clause(ResultSet result_set, string column_list) {
+class WHERE_Execution : public QueryExecutionPlan {
+private:
+    ResultSet result_set;
+    string columnName;
+    IntConstant* constant;
+public:
+    bool execute() override {
+        IntVariable variable;
+        IsGreaterThanINT bool_ex; 
+        bool_ex.setConstant(constant);
+        int new_row_count = 0;
+        rslt_set.setRowCount(0);
+        rslt_set.setColumnDefs(result_set.getColumnDefs());
+        rslt_set.setName(result_set.getName());
+        int row_count = result_set.getRowCount();
+        Context context;
+        for (int i = 0; i < row_count; i++) {
+            Row curr_row = result_set.readRow(i);
+            variable.setVariableValue(curr_row.getValueByColumnName(columnName).getIntValue());
+            bool_ex.setVariable(&variable);
+            context.SetContext(curr_row);
+            if(bool_ex.evaluate() -> getConstantValue() == true) {
+                rslt_set.insertRow(curr_row);
+                new_row_count += 1;
+            }
+        }
+        rslt_set.setRowCount(new_row_count);
+        return true;
+    }
+};
+
+class SELECT_Execution : public QueryExecutionPlan {
+private:
+    ResultSet result_set;
+    string column_list;
+public:
+    bool execute() override {
         int size = result_set.getRowCount();
         string column_name;
         vector<string> columnList;
         stringstream ss(column_list);
         string token;
-        ResultSet reslt_set;
-        reslt_set.setName(result_set.getName());
+        rslt_set.setName(result_set.getName());
         //get the columnDefs
         ColumnDefs col_defs = result_set.getColumnDefs();
         // Build a new columnDefs
@@ -143,9 +295,9 @@ public:
             columnList.push_back(token);
         }
         //Set the row count
-        reslt_set.setRowCount(size);
+        rslt_set.setRowCount(size);
         //Set new columnDefs into reslt_set (có sẵn function setColumnDefs)
-        reslt_set.setColumnDefs(newColumnDefs);
+        rslt_set.setColumnDefs(newColumnDefs);
         for (int index = 0; index < size; index++) {
             //Build new row from the new ColumnDefs
             Row current_row;
@@ -154,36 +306,20 @@ public:
                 current_row.setValueByColumnName(columnList[i], result_set.readRow(index).getValueByColumnName(columnList[i]));
             }
             //Insert new row to new result_set
-            reslt_set.insertRowIntoIndex(current_row, index);
+            rslt_set.insertRowIntoIndex(current_row, index);
         }
-        return reslt_set;
+        return true;
     }
+};
 
-    //the challenging part
-    ResultSet execute_WHERE_clause(ResultSet result_set, string columnName, Constant<int> constant) {
-        IsGreaterThanINT<bool> bool_ex; 
-        bool_ex.setConstant(constant);
-        ResultSet new_result_set;
-        int new_row_count = 0;
-        new_result_set.setRowCount(0);
-        new_result_set.setColumnDefs(result_set.getColumnDefs());
-        new_result_set.setName(result_set.getName());
-        int row_count = result_set.getRowCount();
-        Context<bool> context;
-        for (int i = 0; i < row_count; i++) {
-            Row curr_row = result_set.readRow(i);
-            bool_ex.setVariable(curr_row.getValueByColumnName(columnName).getIntValue());
-            context.SetContext(curr_row);
-            if(context.evaluateExpression(&bool_ex) == true) {
-                new_result_set.insertRow(curr_row);
-                new_row_count += 1;
-            }
-        }
-        new_result_set.setRowCount(new_row_count);
-        return new_result_set;
-    }
-
-    void execute_INSERT_INTO_clause(string database_name, string table_name, string column_list, string value_list) {
+class INSERT_INTO_Execution : public QueryExecutionPlan {
+private:
+    string database_name; 
+    string table_name; 
+    string column_list; 
+    string value_list;
+public:
+    bool execute() override {
         //declare essential objects for the function
         stringstream ss(column_list);
         stringstream ssv(value_list);
@@ -249,9 +385,18 @@ public:
 
         //insert row into table
         engine.InsertRow(database_name, table_name, row);
+        return true;
     }
+};
 
-    void execute_CREATE_TABLE_clause(string database_name, string table_name, string column_list, string type_list) {
+class CREATE_TABLE_Execution : public QueryExecutionPlan {
+private:
+    string database_name; 
+    string table_name; 
+    string column_list; 
+    string type_list;
+public:
+    bool execute() override {
         string column_name;
         stringstream ss(column_list);
         stringstream ss_1(type_list);
@@ -304,9 +449,21 @@ public:
 
         //Create Table
         engine.createTable(database_name, table_name, newColumnDefs);
+        return true;
     }
+};
 
-    void execute_CREATE_DATABASE_clause(string database_name) {
+class CREATE_DATABASE_Execution : public QueryExecutionPlan {
+private:
+    string database_name;
+public:
+    bool execute() override {
         engine.createDatabase(database_name);
+        return true;
     }
+};
+
+class ORDER_BY_Execution : public QueryExecutionPlan {
+public:
+    bool execute() override {}
 };
