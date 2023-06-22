@@ -178,7 +178,7 @@ TEST_F(StorageEngineTest, mainFunction) {
 
 class Query_ExecutionPlanTest : public ::testing::Test {
 public:
-    QueryExecutionPlan plan;
+    QEPComponent plan;
     StorageEngine Engine;
 };
 

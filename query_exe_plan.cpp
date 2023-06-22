@@ -206,7 +206,7 @@ public:
     }
 };
 
-class QueryExecutionPlan {
+class QEPComponent {
 private:
 protected:
     StorageEngine engine;
@@ -219,7 +219,7 @@ public:
     }
 };
 
-class FROM_Execution : public QueryExecutionPlan {
+class FROM_Execution : public QEPComponent {
 private:
     string database_name; 
     string table_name;
@@ -238,13 +238,20 @@ public:
     }
 };
 
-class WHERE_Execution : public QueryExecutionPlan {
+class WHERE_Execution : public QEPComponent {
 private:
-    ResultSet result_set;
+    ResultSet result_set; //Input record set
+    //need a setter to assign this member
     string columnName;
     IntConstant* constant;
+    Expression* expression;
 public:
+    void SetExpression(Expression* expr) {
+        expression = expr;
+    }
     bool execute() override {
+        //using the assigned expression to evaluate the result set
+
         IntVariable variable;
         IsGreaterThanINT bool_ex; 
         bool_ex.setConstant(constant);
@@ -253,6 +260,9 @@ public:
         rslt_set.setColumnDefs(result_set.getColumnDefs());
         rslt_set.setName(result_set.getName());
         int row_count = result_set.getRowCount();
+
+        //using the collumn name in the assigned expression to access to the context to get the value
+        //of that collumn value of the current row
         Context context;
         for (int i = 0; i < row_count; i++) {
             Row curr_row = result_set.readRow(i);
@@ -269,7 +279,7 @@ public:
     }
 };
 
-class SELECT_Execution : public QueryExecutionPlan {
+class SELECT_Execution : public QEPComponent {
 private:
     ResultSet result_set;
     string column_list;
@@ -312,7 +322,7 @@ public:
     }
 };
 
-class INSERT_INTO_Execution : public QueryExecutionPlan {
+class INSERT_INTO_Execution : public QEPComponent {
 private:
     string database_name; 
     string table_name; 
@@ -389,7 +399,7 @@ public:
     }
 };
 
-class CREATE_TABLE_Execution : public QueryExecutionPlan {
+class CREATE_TABLE_Execution : public QEPComponent {
 private:
     string database_name; 
     string table_name; 
@@ -453,7 +463,7 @@ public:
     }
 };
 
-class CREATE_DATABASE_Execution : public QueryExecutionPlan {
+class CREATE_DATABASE_Execution : public QEPComponent {
 private:
     string database_name;
 public:
@@ -463,7 +473,7 @@ public:
     }
 };
 
-class ORDER_BY_Execution : public QueryExecutionPlan {
+class ORDER_BY_Execution : public QEPComponent {
 public:
     bool execute() override {}
 };
