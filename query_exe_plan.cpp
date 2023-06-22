@@ -164,7 +164,7 @@ public:
 private:
 };
 
-class IsGreaterThanINT : public Expression {
+class IsGreaterThanINT : public BinaryOperator {
 public:
     LogicalConstant* evaluate() override {
         if (int_var -> evaluate() -> getConstantValue() > int_constant -> getConstantValue()) {
@@ -219,10 +219,49 @@ public:
     }
 };
 
+class SequencedQueryExecutionPlan : public QEPComponent { //strategy pattern Block
+    map<string, QEPComponent*> components;
+    void BuildMeFromANLTR_AST(){
+        
+    }
+    bool execute() override {
+        
+        return true;
+    }
+};
+
+class JoinQEPComponent: public QEPComponent {
+    QEPComponent* left;
+    QEPComponent* right;
+
+    bool execute() override {
+        left -> execute();
+        right -> execute();
+        left -> getResultSet();
+        right -> getResultSet();
+
+        return true;
+    }
+};
+
+class UnionQEPComponent : public QEPComponent {
+    QEPComponent* top;
+    QEPComponent* bottom;
+    //map of QEPComponents that being unioned together
+    map<string, QEPComponent*> components;
+
+
+    bool execute() override {
+     
+           
+        return true;
+    }
+};
+
 class FROM_Execution : public QEPComponent {
 private:
-    string database_name; 
-    string table_name;
+    string database_name; //setter
+    string table_name; //setter
 public:
     bool execute() override {
         UserTable table =  engine.getTable(database_name, table_name);
