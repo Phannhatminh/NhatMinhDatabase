@@ -219,11 +219,21 @@ public:
     }
 };
 
+//BUILD THIS!
+class QueryExecutionPlan : public QEPComponent { //strategy pattern Block
+    map<string, QEPComponent*> components;
+    void BuildMeFromANLTR_AST(int* ast){
+        //Add manual code to build here!, then we later turn it into a function that using ANLTR_AST
+    }
+    bool execute() override {
+        
+        return true;
+    }
+};
+
 class SequencedQueryExecutionPlan : public QEPComponent { //strategy pattern Block
     map<string, QEPComponent*> components;
-    void BuildMeFromANLTR_AST(){
-        
-    }
+    
     bool execute() override {
         
         return true;
