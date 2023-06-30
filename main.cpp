@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
-#include "query_exe_plan.cpp"
+#include "test.cpp"
 
 using namespace std;
 
@@ -59,11 +59,10 @@ private:
 };
 
 int main(int argc, char **argv) {
-    /*StorageEngine strengine;
+    StorageEngine strengine;
     strengine.getInstance().createDatabase("TestingDatabase");
     ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();*/
-    return 0;
+    return RUN_ALL_TESTS();
 }
 
 

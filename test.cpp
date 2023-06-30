@@ -178,14 +178,19 @@ TEST_F(StorageEngineTest, mainFunction) {
 
 class Query_ExecutionPlanTest : public ::testing::Test {
 public:
-    QEPComponent plan;
+    //Create a composite: query execution plan
     StorageEngine Engine;
+    QueryExecutionPlan pl;
 };
 
 TEST_F(Query_ExecutionPlanTest, FROM_Test) {
-    ResultSet result = plan.execute_FROM_clause("MySchool", "hocsinh");
-    UserTable table = Engine.getTable("MySchool", "hocsinh");
+    FROM_Execution pl;
+    pl.setDatabaseName("MySchool");
+    pl.setTableName("hocsinh");
+    pl.execute();
+    ResultSet result = pl.getResultSet();
     EXPECT_EQ(result.getName(), "hocsinh");
+    UserTable table = Engine.getTable("MySchool", "hocsinh");
     EXPECT_EQ(result.getRowCount(), table.getRowCount());
     EXPECT_EQ(result.readRow(0).getValueByColumnName("id").getIntValue(), 1);
     EXPECT_EQ(result.readRow(1).getValueByColumnName("id").getIntValue(), 2);
@@ -194,12 +199,59 @@ TEST_F(Query_ExecutionPlanTest, FROM_Test) {
 }
 
 TEST_F(Query_ExecutionPlanTest, WHERE_Test) {
-    Constant<int> c;
+    WHERE_Execution where_plan;
+    FROM_Execution from_plan;
+    IntConstant constant;
+    IntConstant c;
     c.setConstantValue(1);
-    ResultSet result = plan.execute_WHERE_clause(plan.execute_FROM_clause("MySchool", "hocsinh"), "id", c);
+    from_plan.setTableName("hocsinh");
+    from_plan.setDatabaseName("MySchool");
+    from_plan.execute();
+    where_plan.setColumnName("id");
+    where_plan.setInputResultSet(from_plan.getResultSet());
+    where_plan.setIntConstant(c);
+    where_plan.execute();
+    ResultSet result = where_plan.getResultSet();
     EXPECT_EQ(result.readRow(0).getValueByColumnName("name").getStringValue(), "Pham Duy Long");
 }
 
 TEST_F(Query_ExecutionPlanTest, SELECT_Test) {
-    ResultSet result = plan.execute_SELECT_clause(plan.execute_FROM_clause("MySchool", "hocsinh"), "name, id");
+    SELECT_Execution select_plan;
+    FROM_Execution from_plan;
+    from_plan.setDatabaseName("MySchool");
+    from_plan.setTableName("hocsinh");
+    from_plan.execute();
+    select_plan.setInputResultSet(from_plan.getResultSet());
+    select_plan.setColumnNameList("name, id");
+    select_plan.execute();
+    ResultSet result = select_plan.getResultSet();
+}
+
+TEST(Quere_Execution_Plan_Test, CompositeTest) {
+    //Create a composite: query execution plan
+    StorageEngine Engine;
+    QueryExecutionPlan pl;
+
+    //Create and add a leaf FROM execution plan
+    FROM_Execution from_pl;
+    from_pl.setDatabaseName("MySchool");
+    from_pl.setTableName("hocsinh");
+    pl.addQEPComponent(&from_pl);
+
+    //Create and add a leaf WHERE execution plan
+    WHERE_Execution where_pl;
+    IntConstant cons;
+    cons.setConstantValue(1);
+    where_pl.setColumnName("id");
+    where_pl.setIntConstant(cons);
+    pl.addQEPComponent(&where_pl);
+
+    //Create and add a leaf SELECT execution plan
+    SELECT_Execution select_pl;
+    select_pl.setColumnNameList("name");
+    pl.addQEPComponent(&select_pl);
+
+    //execute the plan
+    pl.execute();
+    ResultSet final_result = pl.getResultSet();
 }
